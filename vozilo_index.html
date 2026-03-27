@@ -1,0 +1,531 @@
+<!DOCTYPE html>
+<html lang="bs">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no"/>
+  <title>Vozilo IoT</title>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=IBM+Plex+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg:      #0e0e0e;
+      --bg2:     #161616;
+      --bg3:     #1e1e1e;
+      --border:  #2a2a2a;
+      --yellow:  #f0c000;
+      --red:     #cc3333;
+      --green:   #2ecc71;
+      --orange:  #e67e22;
+      --white:   #ebebeb;
+      --dim:     #555;
+      --font:    'IBM Plex Mono', monospace;
+      --title:   'Bebas Neue', cursive;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+    html, body {
+      background: var(--bg);
+      color: var(--white);
+      font-family: var(--font);
+      min-height: 100vh;
+      font-size: 13px;
+    }
+
+    /* ── HEADER ── */
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 16px;
+      height: 52px;
+      background: var(--yellow);
+      border-bottom: 3px solid #000;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+
+    .site-title {
+      font-family: var(--title);
+      font-size: 1.6rem;
+      letter-spacing: 4px;
+      color: #000;
+    }
+
+    .header-right { display: flex; align-items: center; gap: 8px; }
+
+    .pill {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      background: rgba(0,0,0,0.15);
+      border: 1px solid rgba(0,0,0,0.3);
+      padding: 4px 10px;
+      font-size: 0.65rem;
+      letter-spacing: 1px;
+      color: #000;
+      font-weight: 600;
+    }
+    .pill.bad  { background: var(--red);  color: #fff; border-color: var(--red); }
+    .pill.good { background: #000; color: var(--yellow); border-color: #000; }
+    .dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+    .pill.good .dot { animation: pulse 2s infinite; }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
+
+    /* ── TEMP BAR ── */
+    .temp-bar {
+      background: var(--bg2);
+      border-bottom: 1px solid var(--border);
+      padding: 8px 16px;
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      font-size: 0.7rem;
+      letter-spacing: 1px;
+      color: var(--dim);
+    }
+    .temp-val { color: var(--yellow); font-size: 1rem; font-weight: 600; }
+
+    /* ── MAIN ── */
+    main {
+      max-width: 640px;
+      margin: 0 auto;
+      padding: 14px 12px 80px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .sec-title {
+      font-family: var(--title);
+      font-size: 0.85rem;
+      letter-spacing: 4px;
+      color: var(--yellow);
+      margin-bottom: 8px;
+      padding-bottom: 6px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .card {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .sublabel {
+      font-size: 0.6rem;
+      letter-spacing: 2px;
+      color: var(--dim);
+      margin-bottom: 2px;
+      text-transform: uppercase;
+    }
+
+    /* ── BUTTONS ── */
+    .btn-row { display: flex; gap: 8px; }
+
+    .btn {
+      flex: 1;
+      padding: 16px 6px;
+      font-family: var(--title);
+      font-size: 1.05rem;
+      letter-spacing: 2px;
+      background: var(--bg3);
+      border: 2px solid var(--yellow);
+      color: var(--yellow);
+      cursor: pointer;
+      user-select: none;
+      -webkit-user-select: none;
+      touch-action: none;
+      transition: background 0.06s, color 0.06s;
+    }
+    .btn.active { background: var(--yellow); color: #000; }
+
+    /* ── TOGGLE BUTTONS za svjetla ── */
+    .light-btn {
+      flex: 1;
+      padding: 14px 6px;
+      font-family: var(--title);
+      font-size: 0.9rem;
+      letter-spacing: 2px;
+      background: var(--bg3);
+      border: 2px solid var(--border);
+      color: var(--dim);
+      cursor: pointer;
+      transition: all 0.1s;
+    }
+    .light-btn.on {
+      background: var(--yellow);
+      border-color: var(--yellow);
+      color: #000;
+    }
+    .light-btn.on.orange {
+      background: var(--orange);
+      border-color: var(--orange);
+      color: #fff;
+    }
+    .light-btn.on.red {
+      background: var(--red);
+      border-color: var(--red);
+      color: #fff;
+    }
+
+    /* ── SERVO SLIDER ── */
+    .slider-section { display: flex; flex-direction: column; gap: 6px; }
+
+    input[type=range] {
+      -webkit-appearance: none;
+      width: 100%;
+      height: 6px;
+      background: var(--bg3);
+      border: 1px solid var(--border);
+      outline: none;
+      cursor: pointer;
+    }
+    input[type=range]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 28px; height: 28px;
+      background: var(--yellow);
+      border: 2px solid #000;
+      cursor: pointer;
+    }
+    .servo-readout {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .servo-deg { font-size: 1.4rem; color: var(--yellow); font-weight: 600; }
+
+    /* ── ESTOP ── */
+    #estop {
+      width: 100%;
+      padding: 18px;
+      font-family: var(--title);
+      font-size: 1.2rem;
+      letter-spacing: 5px;
+      background: var(--bg2);
+      border: 3px solid var(--red);
+      color: var(--red);
+      cursor: pointer;
+      position: relative;
+      overflow: hidden;
+    }
+    #estop::after {
+      content: '';
+      position: absolute; inset: 0;
+      background: repeating-linear-gradient(
+        -45deg, transparent, transparent 6px,
+        rgba(204,51,51,0.04) 6px, rgba(204,51,51,0.04) 12px
+      );
+    }
+    #estop:active { background: var(--red); color: #fff; }
+
+    /* ── LOG ── */
+    #log {
+      background: #090909;
+      border: 1px solid var(--border);
+      padding: 8px 10px;
+      height: 90px;
+      overflow-y: auto;
+      font-size: 0.65rem;
+      line-height: 1.7;
+    }
+    .log-line { display: flex; gap: 8px; }
+    .log-t  { color: #333; flex-shrink: 0; }
+    .log-s  { color: var(--green); }
+    .log-e  { color: var(--red); }
+    .log-w  { color: #c8a020; }
+    .log-i  { color: #444; }
+
+    .log-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 6px;
+    }
+    .clear-btn {
+      background: none;
+      border: 1px solid var(--border);
+      color: var(--dim);
+      padding: 2px 8px;
+      font-family: var(--font);
+      font-size: 0.6rem;
+      cursor: pointer;
+      letter-spacing: 1px;
+    }
+    .clear-btn:hover { border-color: var(--yellow); color: var(--yellow); }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="site-title">VOZILO IoT</div>
+  <div class="header-right">
+    <div class="pill" id="pill-srv"><div class="dot"></div><span id="txt-srv">SERVER</span></div>
+    <div class="pill" id="pill-voz"><div class="dot"></div><span id="txt-voz">VOZILO</span></div>
+  </div>
+</header>
+
+<div class="temp-bar">
+  <span>TEMPERATURA</span>
+  <span class="temp-val" id="temp-val">— °C</span>
+  <span>VLAGA</span>
+  <span class="temp-val" id="hum-val">— %</span>
+</div>
+
+<main>
+
+  <!-- ESTOP -->
+  <button id="estop" onclick="emergencyStop()">⚠ EMERGENCY STOP ⚠</button>
+
+  <!-- POGON -->
+  <div>
+    <div class="sec-title">Pogon</div>
+    <div class="card">
+      <div class="sublabel">Oba motora</div>
+      <div class="btn-row">
+        <button class="btn" data-m="oba" data-v="255">NAPRIJED</button>
+        <button class="btn" data-m="oba" data-v="-255">NAZAD</button>
+      </div>
+      <div class="sublabel">Motor lijevo</div>
+      <div class="btn-row">
+        <button class="btn" data-m="motor_lijevo" data-v="255">NAPRIJED</button>
+        <button class="btn" data-m="motor_lijevo" data-v="-255">NAZAD</button>
+      </div>
+      <div class="sublabel">Motor desno</div>
+      <div class="btn-row">
+        <button class="btn" data-m="motor_desno" data-v="255">NAPRIJED</button>
+        <button class="btn" data-m="motor_desno" data-v="-255">NAZAD</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- SKRETANJE -->
+  <div>
+    <div class="sec-title">Skretanje</div>
+    <div class="card">
+      <div class="btn-row" style="margin-bottom:8px;">
+        <button class="btn" data-m="servo_skretanje" data-v="60">← LIJEVO</button>
+        <button class="btn" data-m="servo_skretanje" data-v="90">RAVNO</button>
+        <button class="btn" data-m="servo_skretanje" data-v="120">DESNO →</button>
+      </div>
+      <div class="slider-section">
+        <div class="sublabel">Precizno skretanje</div>
+        <input type="range" id="servo-slider" min="0" max="180" value="90">
+        <div class="servo-readout">
+          <span style="color:var(--dim);font-size:0.6rem;">0°</span>
+          <span class="servo-deg" id="servo-deg">90°</span>
+          <span style="color:var(--dim);font-size:0.6rem;">180°</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SVJETLA -->
+  <div>
+    <div class="sec-title">Svjetla</div>
+    <div class="card">
+      <div class="sublabel">Prednja svjetla</div>
+      <div class="btn-row">
+        <button class="light-btn" id="btn-duga"   onclick="toggleLight('svjetlo_duga',   'btn-duga',   'on')">DUGA</button>
+        <button class="light-btn" id="btn-kratka" onclick="toggleLight('svjetlo_kratka', 'btn-kratka', 'on')">KRATKA</button>
+      </div>
+      <div class="sublabel">Žmigavci</div>
+      <div class="btn-row">
+        <button class="light-btn" id="btn-zmi-l" onclick="toggleLight('zmigavac_lijevo', 'btn-zmi-l', 'on orange')">← LIJEVI</button>
+        <button class="light-btn" id="btn-zmi-d" onclick="toggleLight('zmigavac_desno',  'btn-zmi-d', 'on orange')">DESNI →</button>
+      </div>
+      <div class="sublabel">Stop svjetla</div>
+      <div class="btn-row">
+        <button class="light-btn" id="btn-stop" onclick="toggleLight('stop_svjetla', 'btn-stop', 'on red')" style="flex:1;">STOP SVJETLA</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- LOG -->
+  <div>
+    <div class="log-header">
+      <div class="sec-title" style="margin:0;border:none;padding:0;">Log</div>
+      <button class="clear-btn" onclick="clearLog()">OBRIŠI</button>
+    </div>
+    <div id="log"></div>
+  </div>
+
+</main>
+
+<script>
+"use strict";
+
+const CONFIG = {
+  SERVER_URL: window.location.protocol === "https:"
+    ? `wss://${window.location.host}`
+    : `ws://${window.location.host}`,
+  TOKEN  : "dev-token-insecure",
+  HOLD_MS: 80,
+};
+
+let ws         = null;
+let servoPos   = 90;
+let holdTimers = {};
+let lightState = {};
+
+// ── LOG ──────────────────────────────────────────────
+function log(type, msg) {
+  const el  = document.getElementById("log");
+  const t   = new Date().toLocaleTimeString("bs-BA", { hour12: false });
+  const div = document.createElement("div");
+  div.className = "log-line";
+  div.innerHTML = `<span class="log-t">${t}</span><span class="log-${type}">${msg}</span>`;
+  el.appendChild(div);
+  while (el.children.length > 60) el.removeChild(el.firstChild);
+  el.scrollTop = el.scrollHeight;
+}
+function clearLog() { document.getElementById("log").innerHTML = ""; }
+
+// ── WS ───────────────────────────────────────────────
+function connect() {
+  setStatus("srv", false, "SPAJANJE");
+  try { ws = new WebSocket(`${CONFIG.SERVER_URL}?token=${CONFIG.TOKEN}`); }
+  catch(e) { log("e", "WS greška"); setTimeout(connect, 5000); return; }
+
+  ws.onopen = () => {
+    setStatus("srv", true, "SERVER OK");
+    log("s", "Spojen na server");
+  };
+
+  ws.onmessage = (ev) => {
+    try {
+      const m = JSON.parse(ev.data);
+      if (m.type === "init" || m.type === "heartbeat") {
+        setStatus("voz", m.vozilo, m.vozilo ? "VOZILO ON" : "OFFLINE");
+        if (m.temperatura) updateTemp(m.temperatura.temp, m.temperatura.hum);
+      }
+      if (m.type === "vozilo_status") setStatus("voz", m.online, m.online ? "VOZILO ON" : "OFFLINE");
+      if (m.type === "temperatura")   updateTemp(m.temp, m.hum);
+      if (m.type === "emergency_stop") log("e", "⚠ EMERGENCY STOP aktiviran");
+    } catch(e) {}
+  };
+
+  ws.onclose = (e) => {
+    setStatus("srv", false, "OFFLINE");
+    setStatus("voz", false, "OFFLINE");
+    log("w", `Veza prekinuta (${e.code}). Reconnect za 5s...`);
+    setTimeout(connect, 5000);
+  };
+
+  ws.onerror = () => log("e", "WS greška — pokreni server.js");
+}
+
+function sendMotor(motorId, value) {
+  if (ws && ws.readyState === WebSocket.OPEN)
+    ws.send(JSON.stringify({ type: "motor_command", motorId, value }));
+}
+
+function sendSvjetlo(svjetloId, value) {
+  if (ws && ws.readyState === WebSocket.OPEN)
+    ws.send(JSON.stringify({ type: "svjetlo_command", svjetloId, value }));
+}
+
+function sendServo(value) {
+  if (ws && ws.readyState === WebSocket.OPEN)
+    ws.send(JSON.stringify({ type: "servo_command", value }));
+}
+
+// ── STATUS ───────────────────────────────────────────
+function setStatus(which, ok, text) {
+  document.getElementById(`pill-${which}`).className = `pill ${ok ? "good" : "bad"}`;
+  document.getElementById(`txt-${which}`).textContent = text;
+}
+
+function updateTemp(temp, hum) {
+  document.getElementById("temp-val").textContent = temp != null ? temp.toFixed(1) + " °C" : "— °C";
+  document.getElementById("hum-val").textContent  = hum  != null ? hum.toFixed(1)  + " %"  : "— %";
+}
+
+// ── HOLD BUTTONS ─────────────────────────────────────
+function startHold(motorId, value) {
+  if (holdTimers[motorId]) return;
+  const fire = () => sendMotor(motorId, value);
+  fire();
+  holdTimers[motorId] = setInterval(fire, CONFIG.HOLD_MS);
+}
+
+function stopHold(motorId) {
+  if (!holdTimers[motorId]) return;
+  clearInterval(holdTimers[motorId]);
+  holdTimers[motorId] = null;
+  // Servo dugmad ne šalju stop
+  if (motorId !== "servo_skretanje") sendMotor(motorId, 0);
+}
+
+document.querySelectorAll(".btn").forEach(btn => {
+  const m = btn.dataset.m;
+  const v = parseInt(btn.dataset.v);
+
+  // Servo dugmad — samo klik, ne hold
+  if (m === "servo_skretanje") {
+    btn.addEventListener("click", () => {
+      servoPos = v;
+      document.getElementById("servo-slider").value = v;
+      document.getElementById("servo-deg").textContent = v + "°";
+      sendServo(v);
+    });
+    return;
+  }
+
+  const press   = (e) => { e.preventDefault(); btn.classList.add("active");    startHold(m, v); };
+  const release = ()  => {                      btn.classList.remove("active"); stopHold(m);     };
+
+  btn.addEventListener("mousedown",   press,   { passive: false });
+  btn.addEventListener("touchstart",  press,   { passive: false });
+  btn.addEventListener("mouseup",     release);
+  btn.addEventListener("mouseleave",  release);
+  btn.addEventListener("touchend",    release);
+  btn.addEventListener("touchcancel", release);
+});
+
+// ── SERVO SLIDER ─────────────────────────────────────
+document.getElementById("servo-slider").addEventListener("input", (e) => {
+  servoPos = parseInt(e.target.value);
+  document.getElementById("servo-deg").textContent = servoPos + "°";
+  sendServo(servoPos);
+});
+
+// ── TOGGLE SVJETLA ────────────────────────────────────
+function toggleLight(svjetloId, btnId, onClass) {
+  lightState[svjetloId] = !lightState[svjetloId];
+  const on  = lightState[svjetloId];
+  const btn = document.getElementById(btnId);
+  btn.className = `light-btn ${on ? onClass : ""}`;
+  sendSvjetlo(svjetloId, on ? 1 : 0);
+  log(on ? "s" : "w", `${svjetloId}: ${on ? "ON" : "OFF"}`);
+}
+
+// ── EMERGENCY STOP ────────────────────────────────────
+function emergencyStop() {
+  Object.keys(holdTimers).forEach(k => { clearInterval(holdTimers[k]); holdTimers[k] = null; });
+  document.querySelectorAll(".btn").forEach(b => b.classList.remove("active"));
+
+  // Gasi sva svjetla
+  ["svjetlo_duga","svjetlo_kratka","zmigavac_lijevo","zmigavac_desno","stop_svjetla"].forEach(id => {
+    lightState[id] = false;
+  });
+  document.querySelectorAll(".light-btn").forEach(b => b.className = "light-btn");
+
+  if (ws && ws.readyState === WebSocket.OPEN)
+    ws.send(JSON.stringify({ type: "emergency_stop" }));
+
+  // Servo na sredinu
+  servoPos = 90;
+  document.getElementById("servo-slider").value = 90;
+  document.getElementById("servo-deg").textContent = "90°";
+
+  log("e", "⚠⚠⚠ EMERGENCY STOP!");
+}
+
+connect();
+</script>
+</body>
+</html>
